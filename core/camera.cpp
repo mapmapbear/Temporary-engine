@@ -1,10 +1,9 @@
 #include "camera.h"
 #include "engine.h"
 #define GLM_ENABLE_EXPERIMENTAL
-#include "glm/gtx/euler_angles.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtx/euler_angles.hpp"
 #include "imgui.h"
-
 
 Camera::Camera()
 // m_resizeConnection({})
@@ -47,39 +46,29 @@ void Camera::SetRotation(const glm::vec3 &rotation) {
 void Camera::Tick(float delta_time) {
   // TODO
   const float move_speed = 10.0f;
+  const float rotate_speed = 0.003f;
+  ImGuiIO &io = ImGui::GetIO();
+  if (!io.WantCaptureKeyboard) {
 
-  if (ImGui::IsKeyDown(ImGuiKey_A)) {
-    m_pos += GetLeft() * move_speed * delta_time;
-  } else if (ImGui::IsKeyDown(ImGuiKey_S)) {
-    m_pos += GetBack() * move_speed * delta_time;
-  } else if (ImGui::IsKeyDown(ImGuiKey_D)) {
-    m_pos += GetRight() * move_speed * delta_time;
-  } else if (ImGui::IsKeyDown(ImGuiKey_W)) {
-    m_pos += GetForward() * move_speed * delta_time;
+    if (ImGui::IsKeyDown(ImGuiKey_A)) {
+      m_pos += GetLeft() * move_speed * delta_time;
+    } else if (ImGui::IsKeyDown(ImGuiKey_S)) {
+      m_pos += GetBack() * move_speed * delta_time;
+    } else if (ImGui::IsKeyDown(ImGuiKey_D)) {
+      m_pos += GetRight() * move_speed * delta_time;
+    } else if (ImGui::IsKeyDown(ImGuiKey_W)) {
+      m_pos += GetForward() * move_speed * delta_time;
+    }
+    m_pos += GetForward() * ImGui::GetIO().MouseWheel * move_speed * delta_time;
   }
+  if (!io.WantCaptureMouse) {
+    m_pos += GetForward() * io.MouseWheel * move_speed * delta_time;
 
-  m_pos += GetForward() * ImGui::GetIO().MouseWheel * move_speed * delta_time;
-
-  /*
-  if (ImGui::IsMouseClicked(1))
-  {
-          m_mousePos = float2(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
+    if (ImGui::IsMouseDragging(1)) {
+      m_rotation.x += io.MouseDelta.y * rotate_speed;
+      m_rotation.y += io.MouseDelta.x * rotate_speed;
+    }
   }
-
-  if (ImGui::IsMouseDragging(1))
-  {
-          float2 mouse_delta = float2(ImGui::GetMousePos().x,
-  ImGui::GetMousePos().y) - m_mousePos;
-
-          float3 rotation = m_camera.GetRotation();
-          rotation.x += mouse_delta.y * m_cameraRotateSpeed;
-          rotation.y += mouse_delta.x * m_cameraRotateSpeed;
-          m_camera.SetRotation(rotation);
-
-          m_mousePos += mouse_delta;
-  }
-  */
-
   UpdateMatrix();
 }
 
@@ -88,7 +77,8 @@ void Camera::UpdateMatrix() {
   glm::mat4 roMat = glm::mat4(1.0);
   trMat = glm::translate(trMat, m_pos);
 
-  roMat = glm::eulerAngleYXZ(m_rotation.y, m_rotation.x, m_rotation.z);;
+  roMat = glm::eulerAngleYXZ(m_rotation.y, m_rotation.x, m_rotation.z);
+  ;
   m_world = trMat * roMat;
   m_view = glm::inverse(m_world);
   m_viewProjection = m_projection * m_view;

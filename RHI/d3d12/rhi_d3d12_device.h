@@ -74,16 +74,21 @@ public:
   virtual RHIPipelineState *
   CreateMeshShadingPipelineState(const RHIMeshShadingPipelineDesc &desc,
                                  const std::string &name) override;
-  virtual uint32_t
+  virtual RHIDescriptor *
   CreateShaderResourceView(RHIResource *resource,
-                           const RHIShaderResourceViewDesc &desc) override;
-  virtual uint32_t
+                           const RHIShaderResourceViewDesc &desc,
+                           const std::string &name) override;
+  virtual RHIDescriptor *
   CreateUnorderedAccessView(RHIResource *resource,
-                            const RHIUnorderedAccessViewDesc &desc) override;
-  virtual uint32_t
+                            const RHIUnorderedAccessViewDesc &desc,
+                            const std::string &name) override;
+  virtual RHIDescriptor *
   CreateConstantBufferView(RHIBuffer *buffer,
-                           const RHIConstantBufferViewDesc &desc) override;
-  virtual uint32_t CreateSampler(const RHISamplerDesc &desc) override;
+                           const RHIConstantBufferViewDesc &desc,
+                           const std::string &name) override;
+  virtual RHIDescriptor *CreateSampler(const RHISamplerDesc &desc,
+                                       const std::string &name) override;
+
   virtual void ReleaseResourceDescriptor(uint32_t index) override;
   virtual void ReleaseSamplerDescriptor(uint32_t index) override;
   virtual void BeginFrame() override;
@@ -116,7 +121,6 @@ public:
   D3D12Descriptor AllocateDSV();
   D3D12Descriptor AllocateResourceDescriptor();
   D3D12Descriptor AllocateSampler();
-
   void DeleteRTV(const D3D12Descriptor &descriptor);
   void DeleteDSV(const D3D12Descriptor &descriptor);
   void DeleteResourceDescriptor(const D3D12Descriptor &descriptor);

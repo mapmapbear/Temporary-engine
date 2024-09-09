@@ -6,7 +6,7 @@ add_ldflags("/subsystem:windows")
 add_defines("UNICODE", "_UNICODE")
 
 add_requires("linalg")
-add_requires("imgui", {config = {win32=true, }})
+add_requires("imgui docking", {config = {win32=true}, debug = true})
 add_requires("xxhash")
 add_requires("glm")
 add_requires("simpleini")

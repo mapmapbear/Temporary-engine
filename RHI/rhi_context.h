@@ -7,6 +7,7 @@
 #include "rhi_command_list.h"
 #include "rhi_fence.h"
 #include "rhi_shader.h"
+#include "rhi_descriptor.h"
 #include "rhi_pipeline_state.h"
 #include "rhi_swapchain.h"
 

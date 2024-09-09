@@ -11,6 +11,7 @@ Engine *Engine::GetInstance() {
 
 void Engine::Init(const std::string &work_path, void *window_handle,
                   uint32_t window_width, uint32_t window_height) {
+  m_windowHandle = window_handle;
   m_workPath = work_path;
   LoadEngineConfig();
   m_pRenderer = std::make_unique<Renderer>();
@@ -31,7 +32,7 @@ void Engine::Tick() {
   m_pWorld->Tick(frame_time);
 
   m_pRenderer->RenderFrame();
-  m_pWorld->GetGUI()->Render();
+  // m_pWorld->GetGUI()->Render();
 }
 
 void Engine::LoadEngineConfig() {

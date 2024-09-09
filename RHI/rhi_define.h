@@ -150,6 +150,7 @@ enum class RHIUnorderedAccessViewType {
 };
 
 static const uint32_t GFX_ALL_SUB_RESOURCE = 0xFFFFFFFF;
+static const uint32_t GFX_INVALID_RESOURCE = 0xFFFFFFFF;
 
 struct RHIDeviceDesc {
   RHIRenderBackend backend = RHIRenderBackend::D3D12;
@@ -193,7 +194,7 @@ struct RHIConstantBufferViewDesc {
 };
 
 struct RHIShaderResourceViewDesc {
-  RHIShaderResourceViewType type;
+  RHIShaderResourceViewType type = RHIShaderResourceViewType::Texture2D;
 
   union {
     struct {
@@ -205,14 +206,15 @@ struct RHIShaderResourceViewDesc {
     } texture;
 
     struct {
-      uint32_t size;
-      uint32_t offset;
+      uint32_t size = 0;
+      uint32_t offset = 0;
     } buffer;
   };
+  RHIShaderResourceViewDesc() : texture() {}
 };
 
 struct RHIUnorderedAccessViewDesc {
-  RHIUnorderedAccessViewType type;
+  RHIUnorderedAccessViewType type = RHIUnorderedAccessViewType::Texture2D;
 
   union {
     struct {

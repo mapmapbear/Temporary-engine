@@ -73,16 +73,74 @@ void Renderer::CreateDevice(void *window_handle, uint32_t window_width,
     m_pCommandLists[i].reset(
         m_pDevice->CreateCommandList(RHICommandQueue::Graphics, name));
   }
+  m_pUploadFence.reset(m_pDevice->CreateFence("Renderer::m_pUploadFence"));
+  for (int i = 0; i < MAX_INFLIGHT_FRAMES; ++i) {
+    std::string name =
+        "Renderer::m_pUploadCommandList[" + std::to_string(i) + "]";
+    m_pUploadCommandList[i].reset(
+        m_pDevice->CreateCommandList(RHICommandQueue::Copy, name));
+
+    m_pStagingBufferAllocator[i] =
+        std::make_unique<StagingBufferAllocator>(this);
+  }
+
   CreateCommonResources();
 }
 
 void Renderer::RenderFrame() {
+  BeginFrame();
+  UploadResources();
+  Render();
+  EndFrame();
+}
+
+void Renderer::BeginFrame() {
   uint32_t frame_index = m_pDevice->GetFrameID() % MAX_INFLIGHT_FRAMES;
   m_pFrameFence->Wait(m_nFrameFenceValue[frame_index]);
   m_pDevice->BeginFrame();
 
   RHICommandList *pCommandList = m_pCommandLists[frame_index].get();
   pCommandList->Begin();
+}
+
+void Renderer::UploadResources() {
+  if (m_pendingTextureUploads.empty() && m_pendingBufferUpload.empty()) {
+    return;
+  }
+  uint32_t frame_index = m_pDevice->GetFrameID() % MAX_INFLIGHT_FRAMES;
+  RHICommandList *pUploadCommandList = m_pUploadCommandList[frame_index].get();
+  pUploadCommandList->Begin();
+
+  {
+    RENDER_EVENT(pUploadCommandList, "Renderer::UploadResources");
+
+    for (size_t i = 0; i < m_pendingTextureUploads.size(); ++i) {
+      const TextureUpload &upload = m_pendingTextureUploads[i];
+      pUploadCommandList->CopyBufferToTexture(
+          upload.texture, upload.staging_buffer.buffer,
+          upload.staging_buffer.offset, upload.staging_buffer.size);
+    }
+    m_pendingTextureUploads.clear();
+
+    for (size_t i = 0; i < m_pendingBufferUpload.size(); ++i) {
+    }
+    m_pendingBufferUpload.clear();
+  }
+
+  pUploadCommandList->End();
+  pUploadCommandList->Submit();
+
+  m_nCurrentUploadFenceValue++;
+  pUploadCommandList->Signal(m_pUploadFence.get(), m_nCurrentUploadFenceValue);
+
+  RHICommandList *pCommandList = m_pCommandLists[frame_index].get();
+  pCommandList->Wait(m_pUploadFence.get(), m_nCurrentUploadFenceValue);
+}
+
+void Renderer::Render() {
+  uint32_t frame_index = m_pDevice->GetFrameID() % MAX_INFLIGHT_FRAMES;
+  RHICommandList *pCommandList = m_pCommandLists[frame_index].get();
+
   pCommandList->BeginEvent("Renderer::RenderFrame");
 
   RHITexture *pBackBuffer = m_pSwapchain->GetBackBuffer();
@@ -116,20 +174,27 @@ void Renderer::RenderFrame() {
     pCommandList->Draw(3, 1);
   }
 
+  GUI *pGui = Engine::GetInstance()->GetWorld()->GetGUI();
+  pGui->Render(pCommandList);
+
   pCommandList->EndRenderPass();
   pCommandList->ResourceBarrier(pBackBuffer, 0, RHIResourceState::RenderTarget,
                                 RHIResourceState::Present);
+}
 
-  pCommandList->EndEvent();
+void Renderer::EndFrame() {
+  uint32_t frame_index = m_pDevice->GetFrameID() % MAX_INFLIGHT_FRAMES;
+  RHICommandList *pCommandList = m_pCommandLists[frame_index].get();
   pCommandList->End();
 
   ++m_nCurrentFenceValue;
   m_nFrameFenceValue[frame_index] = m_nCurrentFenceValue;
 
   pCommandList->Submit();
-
   m_pSwapchain->Present();
   pCommandList->Signal(m_pFrameFence.get(), m_nCurrentFenceValue);
+
+  m_pStagingBufferAllocator[frame_index]->Reset();
 
   m_pDevice->EndFrame();
 }
@@ -149,12 +214,14 @@ Renderer::GetPipelineState(const RHIGraphicsPipelineDesc &desc,
 
 void Renderer::CreateCommonResources() {
   RHISamplerDesc desc;
-  m_nPointSampler = m_pDevice->CreateSampler(desc);
+  m_pPointSampler.reset(
+      m_pDevice->CreateSampler(desc, "Renderer::m_pPointSampler"));
 
   desc.min_filter = RHIFilter::Linear;
   desc.mag_filter = RHIFilter::Linear;
   desc.mip_filter = RHIFilter::Linear;
-  m_nLinearSampler = m_pDevice->CreateSampler(desc);
+  m_pLinearSampler.reset(
+      m_pDevice->CreateSampler(desc, "Renderer::m_pLinearSampler"));
 }
 
 void Renderer::WaitGpuFinished() { m_pFrameFence->Wait(m_nCurrentFenceValue); }
@@ -163,4 +230,18 @@ void Renderer::OnWindowResize(uint32_t width, uint32_t height) {
   WaitGpuFinished();
 
   m_pSwapchain->Resize(width, height);
+}
+
+void Renderer::UploadTexture(RHITexture *texture, void *data,
+                             uint32_t data_size) {
+    uint32_t frame_index = m_pDevice->GetFrameID() % MAX_INFLIGHT_FRAMES;
+    StagingBufferAllocator* pAllocator = m_pStagingBufferAllocator[frame_index].get();
+
+    StagingBuffer buffer = pAllocator->Allocate(data_size);
+    memcpy((char*)buffer.buffer->GetCpuAddress() + buffer.offset, data, data_size);
+
+    m_pendingTextureUploads.push_back({ texture, buffer });
+}
+
+void Renderer::UploadBuffer(RHIBuffer *buffer, void *data, uint32_t data_size) {
 }
