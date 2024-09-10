@@ -39,22 +39,23 @@ bool GUI::Init() {
   io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
   RHITextureDesc textureDesc;
-	textureDesc.width = width;
-	textureDesc.height = height;
-	textureDesc.type = RHITextureType::Texture2D;
-	textureDesc.format = RHIFormat::RGBA8UNORM;
-	textureDesc.alloc_type = RHIAllocationType::Placed;
-	m_pFontTexture.reset(pDevice->CreateTexture(textureDesc, "GUI::m_pFontTexture"));
+  textureDesc.width = width;
+  textureDesc.height = height;
+  textureDesc.type = RHITextureType::Texture2D;
+  textureDesc.format = RHIFormat::RGBA8UNORM;
+  textureDesc.alloc_type = RHIAllocationType::Placed;
+  m_pFontTexture.reset(
+      pDevice->CreateTexture(textureDesc, "GUI::m_pFontTexture"));
 
-	pRenderer->UploadTexture(m_pFontTexture.get(), pixels, width * height * 4);
+  pRenderer->UploadTexture(m_pFontTexture.get(), pixels, width * height * 4);
 
-	RHIShaderResourceViewDesc srvDesc;
-	srvDesc.type = RHIShaderResourceViewType::Texture2D;
-	srvDesc.texture.mip_levels = 1;
-	m_pFontTextureSRV.reset(pDevice->CreateShaderResourceView(m_pFontTexture.get(), srvDesc, "GUI::m_pFontTextureSRV"));
+  RHIShaderResourceViewDesc srvDesc;
+  srvDesc.type = RHIShaderResourceViewType::Texture2D;
+  srvDesc.texture.mip_levels = 1;
+  m_pFontTextureSRV.reset(pDevice->CreateShaderResourceView(
+      m_pFontTexture.get(), srvDesc, "GUI::m_pFontTextureSRV"));
 
-	io.Fonts->TexID = (ImTextureID)m_pFontTextureSRV.get();
-
+  io.Fonts->TexID = (ImTextureID)m_pFontTextureSRV.get();
 
   RHIGraphicsPipelineDesc desc;
   desc.vs = pRenderer->GetShader("imgui.hlsl", "vs_main", "vs_6_6", {});
@@ -189,8 +190,8 @@ void GUI::Render(RHICommandList *pCommandList) {
           pCommandList->SetConstantBuffer(RHIPipelineType::Graphics, 0,
                                           resource_ids, sizeof(resource_ids));
 
-          pCommandList->DrawIndexed(pcmd->ElemCount,
-                                    pcmd->IdxOffset + global_idx_offset, 1);
+          pCommandList->DrawIndexed(pcmd->ElemCount, 1,
+                                    pcmd->IdxOffset + global_idx_offset);
         }
       }
     }
