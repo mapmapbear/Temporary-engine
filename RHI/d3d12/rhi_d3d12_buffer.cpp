@@ -22,6 +22,17 @@ uint64_t D3D12Buffer::GetGpuAddress() {
   return m_pBuffer->GetGPUVirtualAddress();
 }
 
+uint32_t D3D12Buffer::GetRequiredStagingBufferSize() const
+{
+	ID3D12Device* pDevice = (ID3D12Device*)m_pDevice->GetHandle();
+
+	D3D12_RESOURCE_DESC desc = m_pBuffer->GetDesc();
+
+	uint64_t size;
+	pDevice->GetCopyableFootprints(&desc, 0, 1, 0, nullptr, nullptr, nullptr, &size);
+	return (uint32_t)size;
+}
+
 bool D3D12Buffer::Create() {
   D3D12MA::Allocator *pAllocator =
       ((D3D12Device *)m_pDevice)->GetResourceAllocator();

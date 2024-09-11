@@ -9,7 +9,7 @@ GUI::GUI() {
   ImGui::CreateContext();
   ImGuiIO &io = ImGui::GetIO();
   (void)io;
-  // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable
   // Keyboard Controls io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; //
   // Enable Gamepad Controls
   io.BackendRendererName = "imgui_impl_realengine";
@@ -17,7 +17,6 @@ GUI::GUI() {
       ImGuiBackendFlags_RendererHasVtxOffset; // We can honor the
                                               // ImDrawCmd::VtxOffset field,
                                               // allowing for large meshes.
-
   ImGui::StyleColorsDark();
   // ImGui::StyleColorsClassic();
 
@@ -76,7 +75,6 @@ bool GUI::Init() {
 void GUI::NewFrame() {
   ImGui_ImplWin32_NewFrame();
   ImGui::NewFrame();
-
   // test code
   ImGui::Begin("Hello, world!");
   ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,

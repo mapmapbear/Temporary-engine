@@ -21,9 +21,9 @@ public:
   virtual void Signal(RHIFence *fence, uint64_t value) = 0;
   virtual void Submit() = 0;
 
-  virtual void CopyBufferToTexture(RHITexture *texture, RHIBuffer *buffer,
-                                   uint32_t data_offset,
-                                   uint32_t data_size) = 0;
+  virtual void CopyBufferToTexture(RHITexture *texture, uint32_t mip_level,
+                                   uint32_t array_slice, RHIBuffer *buffer,
+                                   uint32_t data_offset) = 0;
   // virtual void CopyBufferToTexture() = 0;
   // virtual void CopyTexture() = 0;
 

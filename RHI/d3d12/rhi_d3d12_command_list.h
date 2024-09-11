@@ -22,9 +22,9 @@ public:
   virtual void BeginEvent(const std::string &event_name) override;
   virtual void EndEvent() override;
 
-  virtual void CopyBufferToTexture(RHITexture *texture, RHIBuffer *buffer,
-                                   uint32_t data_offset,
-                                   uint32_t data_size) override;
+  virtual void CopyBufferToTexture(RHITexture *texture, uint32_t mip_level,
+                                   uint32_t array_slice, RHIBuffer *buffer,
+                                   uint32_t data_offset) override;
 
   virtual void Wait(RHIFence *fence, uint64_t value) override;
   virtual void Signal(RHIFence *fence, uint64_t value) override;

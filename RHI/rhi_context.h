@@ -12,6 +12,9 @@
 #include "rhi_swapchain.h"
 
 RHIDevice* CreateGfxDevice(const RHIDeviceDesc& desc);
+uint32_t GetFormatRowPitch(RHIFormat format, uint32_t width);
+uint32_t GetFormatBlockWidth(RHIFormat format);
+uint32_t GetFormatBlockHeight(RHIFormat format);
 
 class RenderEvent
 {

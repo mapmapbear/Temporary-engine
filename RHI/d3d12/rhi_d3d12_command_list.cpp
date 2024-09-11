@@ -1,4 +1,5 @@
 #include "rhi_d3d12_command_list.h"
+#include "../rhi_context.h"
 #include "../utils/fassert.h"
 #include "../utils/fmath.h"
 #include "RHI/rhi_define.h"
@@ -8,6 +9,7 @@
 #include "rhi_d3d12_fence.h"
 #include "rhi_d3d12_pipeline_state.h"
 #include "rhi_d3d12_texture.h"
+
 
 D3D12CommandList::D3D12CommandList(RHIDevice *pDevice,
                                    RHICommandQueue queue_type,
@@ -104,29 +106,36 @@ void D3D12CommandList::Signal(RHIFence *fence, uint64_t value) {
   m_pCommandQueue->Signal((ID3D12Fence *)fence->GetHandle(), value);
 }
 
+void D3D12CommandList::CopyBufferToTexture(RHITexture *texture,
+                                           uint32_t mip_level,
+                                           uint32_t array_slice,
+                                           RHIBuffer *buffer,
+                                           uint32_t data_offset) {
+  const RHITextureDesc &desc = texture->GetDesc();
+  uint32_t subresource = array_slice * desc.mip_levels + mip_level;
 
-void D3D12CommandList::CopyBufferToTexture(RHITexture* texture, RHIBuffer* buffer, uint32_t data_offset, uint32_t data_size)
-{
-	//todo : refacoring
+  D3D12_TEXTURE_COPY_LOCATION dst = {};
+  dst.pResource = (ID3D12Resource *)texture->GetHandle();
+  dst.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+  dst.SubresourceIndex = subresource;
 
-	D3D12_TEXTURE_COPY_LOCATION dst = {};
-	dst.pResource = (ID3D12Resource*)texture->GetHandle();
-	dst.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-	dst.SubresourceIndex = 0;
+  uint32_t min_width = GetFormatBlockWidth(desc.format);
+  uint32_t min_height = GetFormatBlockHeight(desc.format);
+  uint32_t w = max(desc.width >> mip_level, min_width);
+  uint32_t h = max(desc.height >> mip_level, min_height);
+  uint32_t d = max(desc.depth >> mip_level, 1);
 
-	D3D12_RESOURCE_DESC desc = dst.pResource->GetDesc();
-	D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint;
+  D3D12_TEXTURE_COPY_LOCATION src = {};
+  src.pResource = (ID3D12Resource *)buffer->GetHandle();
+  src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+  src.PlacedFootprint.Offset = data_offset;
+  src.PlacedFootprint.Footprint.Format = dxgi_format(desc.format);
+  src.PlacedFootprint.Footprint.Width = w;
+  src.PlacedFootprint.Footprint.Height = h;
+  src.PlacedFootprint.Footprint.Depth = d;
+  src.PlacedFootprint.Footprint.RowPitch = GetFormatRowPitch(desc.format, w);
 
-	ID3D12Device* pDevice = (ID3D12Device*)m_pDevice->GetHandle();
-	pDevice->GetCopyableFootprints(&desc, 0, 1, 0, &footprint, nullptr, nullptr, nullptr);
-
-	D3D12_TEXTURE_COPY_LOCATION src;
-	src.pResource = (ID3D12Resource*)buffer->GetHandle();
-	src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-	src.PlacedFootprint = footprint;
-	src.PlacedFootprint.Offset += data_offset;
-
-	m_pCommandList->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
+  m_pCommandList->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
 }
 
 void D3D12CommandList::Submit() {
@@ -295,9 +304,11 @@ void D3D12CommandList::Draw(uint32_t vertex_count, uint32_t instance_count) {
   m_pCommandList->DrawInstanced(vertex_count, instance_count, 0, 0);
 }
 
-void D3D12CommandList::DrawIndexed(uint32_t index_count, uint32_t instance_count, uint32_t index_offset)
-{
-	m_pCommandList->DrawIndexedInstanced(index_count, instance_count, index_offset, 0, 0);
+void D3D12CommandList::DrawIndexed(uint32_t index_count,
+                                   uint32_t instance_count,
+                                   uint32_t index_offset) {
+  m_pCommandList->DrawIndexedInstanced(index_count, instance_count,
+                                       index_offset, 0, 0);
 }
 
 void D3D12CommandList::FlushPendingBarrier() {

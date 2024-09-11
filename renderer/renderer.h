@@ -7,6 +7,7 @@
 #include "shader_cache.h"
 #include "shader_compiler.h"
 #include "staging_buffer_allocator.h"
+#include <cstdint>
 #include <memory>
 
 const static int MAX_INFLIGHT_FRAMES = 3;
@@ -39,7 +40,7 @@ public:
                                      const std::string &name);
   RHIDescriptor *GetPointSampler() const { return m_pPointSampler.get(); }
   RHIDescriptor *GetLinearSampler() const { return m_pLinearSampler.get(); }
-
+  uint64_t GetFrameID() const { return m_pDevice->GetFrameID(); }
   void UploadTexture(RHITexture *texture, void *data, uint32_t data_size);
   void UploadBuffer(RHIBuffer *buffer, void *data, uint32_t data_size);
 
@@ -75,7 +76,10 @@ private:
 
   struct TextureUpload {
     RHITexture *texture;
+    uint32_t mip_level;
+    uint32_t array_slice;
     StagingBuffer staging_buffer;
+    uint32_t offset;
   };
   std::vector<TextureUpload> m_pendingTextureUploads;
 

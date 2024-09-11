@@ -2,14 +2,14 @@
 
 #include "rhi_resource.h"
 
-class RHIBuffer : public RHIResource
-{
+class RHIBuffer : public RHIResource {
 public:
-	const RHIBufferDesc& GetDesc() const { return m_desc; }
+  const RHIBufferDesc &GetDesc() const { return m_desc; }
 
-	virtual void* GetCpuAddress() = 0;
-	virtual uint64_t GetGpuAddress() = 0;
+  virtual void *GetCpuAddress() = 0;
+  virtual uint64_t GetGpuAddress() = 0;
+  virtual uint32_t GetRequiredStagingBufferSize() const = 0;
 
 protected:
-	RHIBufferDesc m_desc = {};
+  RHIBufferDesc m_desc = {};
 };

@@ -5,23 +5,26 @@
 
 class Renderer;
 
-struct StagingBuffer
-{
-    RHIBuffer* buffer;
-    uint32_t size;
-    uint32_t offset;
+struct StagingBuffer {
+  RHIBuffer *buffer;
+  uint32_t size;
+  uint32_t offset;
 };
 
-class StagingBufferAllocator
-{
+class StagingBufferAllocator {
 public:
-    StagingBufferAllocator(Renderer* pRenderer);
+  StagingBufferAllocator(Renderer *pRenderer);
 
-    StagingBuffer Allocate(uint32_t size);
-    void Reset();
+  StagingBuffer Allocate(uint32_t size);
+  void Reset();
 
 private:
-    Renderer* m_pRenderer = nullptr;
-    std::unique_ptr<RHIBuffer> m_pBuffer;
-    uint32_t m_nAllocatedSize = 0;
+  void CreateNewBuffer();
+
+private:
+  Renderer *m_pRenderer = nullptr;
+  std::vector<std::unique_ptr<RHIBuffer>> m_pBuffers;
+  uint32_t m_nCurrentBuffer = 0;
+  uint32_t m_nAllocatedSize = 0;
+  uint64_t m_nLastAllocatedFrame = 0;
 };
