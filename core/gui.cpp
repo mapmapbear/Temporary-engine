@@ -180,10 +180,10 @@ void GUI::Render(RHICommandList *pCommandList) {
                                        (uint32_t)width, (uint32_t)height);
 
           uint32_t resource_ids[4] = {
-              m_pVertexBufferSRV[frame_index]->GetIndex(),
+              m_pVertexBufferSRV[frame_index]->GetHeapIndex(),
               pcmd->VtxOffset + global_vtx_offset,
-              ((RHIDescriptor *)pcmd->TextureId)->GetIndex(),
-              pRenderer->GetLinearSampler()->GetIndex()};
+              ((RHIDescriptor *)pcmd->TextureId)->GetHeapIndex(),
+              pRenderer->GetLinearSampler()->GetHeapIndex()};
 
           pCommandList->SetConstantBuffer(RHIPipelineType::Graphics, 0,
                                           resource_ids, sizeof(resource_ids));

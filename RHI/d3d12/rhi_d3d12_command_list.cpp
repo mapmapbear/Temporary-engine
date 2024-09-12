@@ -2,6 +2,7 @@
 #include "../rhi_context.h"
 #include "../utils/fassert.h"
 #include "../utils/fmath.h"
+#include "RHI/d3d12/rhi_d3d12_command_list.h"
 #include "RHI/rhi_define.h"
 #include "pix_runtime.h"
 #include "rhi_d3d12_buffer.h"
@@ -9,7 +10,6 @@
 #include "rhi_d3d12_fence.h"
 #include "rhi_d3d12_pipeline_state.h"
 #include "rhi_d3d12_texture.h"
-
 
 D3D12CommandList::D3D12CommandList(RHIDevice *pDevice,
                                    RHICommandQueue queue_type,
@@ -138,6 +138,13 @@ void D3D12CommandList::CopyBufferToTexture(RHITexture *texture,
   m_pCommandList->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
 }
 
+void D3D12CommandList::CopyBuffer(RHIBuffer *dst_buffer, uint32_t dst_offset,
+                                  RHIBuffer *src_buffer, uint32_t src_offset,
+                                  uint32_t size) {
+  m_pCommandList->CopyBufferRegion(
+      (ID3D12Resource *)dst_buffer->GetHandle(), dst_offset,
+      (ID3D12Resource *)src_buffer->GetHandle(), src_offset, size);
+}
 void D3D12CommandList::Submit() {
   ID3D12CommandList *ppCommandLists[] = {m_pCommandList};
   m_pCommandQueue->ExecuteCommandLists(1, ppCommandLists);

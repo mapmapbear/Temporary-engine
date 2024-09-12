@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rhi_resource.h"
+#include <stdint.h>
 
 class RHIFence;
 class RHIBuffer;
@@ -24,8 +25,7 @@ public:
   virtual void CopyBufferToTexture(RHITexture *texture, uint32_t mip_level,
                                    uint32_t array_slice, RHIBuffer *buffer,
                                    uint32_t data_offset) = 0;
-  // virtual void CopyBufferToTexture() = 0;
-  // virtual void CopyTexture() = 0;
+  virtual void CopyBuffer(RHIBuffer* dst_buffer, uint32_t dst_offset, RHIBuffer* src_buffer, uint32_t src_offset, uint32_t size) = 0;
 
   virtual void ResourceBarrier(RHIResource *resource, uint32_t sub_resource,
                                RHIResourceState old_state,

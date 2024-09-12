@@ -83,7 +83,11 @@ private:
   };
   std::vector<TextureUpload> m_pendingTextureUploads;
 
-  struct BufferUpload {};
+  struct BufferUpload {
+    RHIBuffer *buffer;
+    uint32_t offset;
+    StagingBuffer staging_buffer;
+  };
   std::vector<BufferUpload> m_pendingBufferUpload;
   std::unique_ptr<ShaderCompiler> m_pShaderCompiler;
   std::unique_ptr<ShaderCache> m_pShaderCache;

@@ -1,6 +1,6 @@
 #include "renderer.h"
 #include "core/engine.h"
-
+#include <stdint.h>
 
 Renderer::Renderer() {
   m_pShaderCompiler = std::make_unique<ShaderCompiler>();
@@ -140,8 +140,13 @@ void Renderer::UploadResources() {
     }
     m_pendingTextureUploads.clear();
 
-    for (size_t i = 0; i < m_pendingBufferUpload.size(); ++i) {
-    }
+    for (size_t i = 0; i < m_pendingBufferUpload.size(); ++i)
+      for (size_t i = 0; i < m_pendingBufferUpload.size(); ++i) {
+        const BufferUpload &upload = m_pendingBufferUpload[i];
+        pUploadCommandList->CopyBuffer(
+            upload.buffer, 0, upload.staging_buffer.buffer,
+            upload.staging_buffer.offset, upload.staging_buffer.size);
+      }
     m_pendingBufferUpload.clear();
   }
 
@@ -159,7 +164,9 @@ void Renderer::Render() {
   uint32_t frame_index = m_pDevice->GetFrameID() % MAX_INFLIGHT_FRAMES;
   RHICommandList *pCommandList = m_pCommandLists[frame_index].get();
 
-  pCommandList->BeginEvent("Renderer::RenderFrame");
+  std::string event_name =
+      "Render Frame " + std::to_string(m_pDevice->GetFrameID());
+  RENDER_EVENT(pCommandList, event_name.c_str());
 
   RHITexture *pBackBuffer = m_pSwapchain->GetBackBuffer();
   pCommandList->ResourceBarrier(pBackBuffer, 0, RHIResourceState::Present,
@@ -293,4 +300,19 @@ void Renderer::UploadTexture(RHITexture *texture, void *data,
 }
 
 void Renderer::UploadBuffer(RHIBuffer *buffer, void *data, uint32_t data_size) {
+  uint32_t frame_index = m_pDevice->GetFrameID() % MAX_INFLIGHT_FRAMES;
+  StagingBufferAllocator *pAllocator =
+      m_pStagingBufferAllocator[frame_index].get();
+
+  uint32_t required_size = buffer->GetRequiredStagingBufferSize();
+  StagingBuffer staging_buffer = pAllocator->Allocate(required_size);
+
+  char *dst_data =
+      (char *)staging_buffer.buffer->GetCpuAddress() + staging_buffer.offset;
+  memcpy(dst_data, data, data_size);
+
+  BufferUpload upload;
+  upload.buffer = buffer;
+  upload.staging_buffer = staging_buffer;
+  m_pendingBufferUpload.push_back(upload);
 }

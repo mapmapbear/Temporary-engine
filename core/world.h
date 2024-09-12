@@ -12,7 +12,7 @@ public:
   GUI *GetGUI() const { return m_pGUI.get(); }
 
   void Tick(float delta_time);
-
+  void LoadScene(std::string sceneName);
 private:
   void TickGUI();
 

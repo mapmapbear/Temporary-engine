@@ -18,6 +18,7 @@ void Engine::Init(const std::string &work_path, void *window_handle,
   m_pRenderer->CreateDevice(window_handle, window_width, window_height,
                             m_enableVsync);
   m_pWorld = std::make_unique<World>();
+  m_pWorld->LoadScene("cube.gltf");
   Camera *camera = m_pWorld->GetCamera();
   camera->SetPerpective((float)window_width / window_height, (float)90,
                         (float)0.1, (float)100.0);

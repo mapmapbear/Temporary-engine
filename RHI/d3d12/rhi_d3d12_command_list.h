@@ -25,6 +25,9 @@ public:
   virtual void CopyBufferToTexture(RHITexture *texture, uint32_t mip_level,
                                    uint32_t array_slice, RHIBuffer *buffer,
                                    uint32_t data_offset) override;
+  virtual void CopyBuffer(RHIBuffer *dst_buffer, uint32_t dst_offset,
+                          RHIBuffer *src_buffer, uint32_t src_offset,
+                          uint32_t size) override;
 
   virtual void Wait(RHIFence *fence, uint64_t value) override;
   virtual void Signal(RHIFence *fence, uint64_t value) override;
