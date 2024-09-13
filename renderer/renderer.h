@@ -2,11 +2,14 @@
 
 #include "../utils/fmath.h"
 #include "RHI/rhi_context.h"
+#include "RHI/rhi_define.h"
 #include "RHI/rhi_fence.h"
 #include "pipeline_cache.h"
+#include "render_target.h"
 #include "shader_cache.h"
 #include "shader_compiler.h"
 #include "staging_buffer_allocator.h"
+#include "texture.h"
 #include <cstdint>
 #include <memory>
 
@@ -41,6 +44,19 @@ public:
   RHIDescriptor *GetPointSampler() const { return m_pPointSampler.get(); }
   RHIDescriptor *GetLinearSampler() const { return m_pLinearSampler.get(); }
   uint64_t GetFrameID() const { return m_pDevice->GetFrameID(); }
+  uint32_t GetBackbufferWidth() const { return m_pSwapchain->GetDesc().width; }
+  uint32_t GetBackbufferHeight() const {
+    return m_pSwapchain->GetDesc().height;
+  }
+
+  Texture *CreateTexture(const std::string &file);
+  RenderTarget *CreateRenderTarget(
+      uint32_t width, uint32_t height, RHIFormat format,
+      const std::string &name,
+      RHITextureUsageFlags flags = GfxTextureUsageShaderResource |
+                                   GfxTextureUsageRenderTarget,
+      bool auto_resize = true, float size = 1.0f);
+
   void UploadTexture(RHITexture *texture, void *data, uint32_t data_size);
   void UploadBuffer(RHIBuffer *buffer, void *data, uint32_t data_size);
 
@@ -95,4 +111,5 @@ private:
 
   std::unique_ptr<RHIDescriptor> m_pPointSampler;
   std::unique_ptr<RHIDescriptor> m_pLinearSampler;
+  std::unique_ptr<RenderTarget> m_pDepthRT;
 };

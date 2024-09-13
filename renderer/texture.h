@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rhi/rhi_context.h"
+#include "RHI/rhi_context.h"
 #include <memory>
 
 class Renderer;

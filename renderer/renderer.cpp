@@ -247,13 +247,41 @@ void Renderer::CreateCommonResources() {
   desc.mip_filter = RHIFilter::Linear;
   m_pLinearSampler.reset(
       m_pDevice->CreateSampler(desc, "Renderer::m_pLinearSampler"));
+  RHITexture *pBackBuffer = m_pSwapchain->GetBackBuffer();
+  uint32_t width = pBackBuffer->GetDesc().width;
+  uint32_t height = pBackBuffer->GetDesc().height;
+  m_pDepthRT.reset(CreateRenderTarget(
+      width, height, RHIFormat::D32FS8, "Renderer::m_pDepthRT",
+      GfxTextureUsageDepthStencil | GfxTextureUsageShaderResource));
+}
+
+Texture *Renderer::CreateTexture(const std::string &file) {
+  Texture *texture = new Texture(this, file);
+  if (!texture->Create()) {
+    delete texture;
+    return nullptr;
+  }
+  return texture;
+}
+
+RenderTarget *Renderer::CreateRenderTarget(uint32_t width, uint32_t height,
+                                           RHIFormat format,
+                                           const std::string &name,
+                                           RHITextureUsageFlags flags,
+                                           bool auto_resize, float size) {
+  RenderTarget *rt = new RenderTarget(auto_resize, size, name);
+  if (!rt->Create(width, height, format, flags)) {
+    delete rt;
+    return nullptr;
+  }
+  return rt;
 }
 
 void Renderer::WaitGpuFinished() { m_pFrameFence->Wait(m_nCurrentFenceValue); }
 
 void Renderer::OnWindowResize(uint32_t width, uint32_t height) {
   WaitGpuFinished();
-
+  m_pDepthRT->OnWindowResize(width, height);
   m_pSwapchain->Resize(width, height);
 }
 
